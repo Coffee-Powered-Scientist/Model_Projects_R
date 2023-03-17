@@ -22,6 +22,11 @@ library(deSolve)
 #V: volume of water in the system (L)
 
 # Define parameter values
+
+setwd("F:/Model_Projects/Model_Projects_R/Micro_Greens/v.1")
+
+read.csv("Nutrient_Data.csv")
+
 parameters <- c(VM_C1 = 0.05, VM_C2 = 0.05, K1 = 0.01, K2 = 0.01, s1 = 0.0012,
                 s2 = 0.0012, VI = 1, VO = 2, mu_w = 2, CI1 = 0.01, CI2 = .01)
 
