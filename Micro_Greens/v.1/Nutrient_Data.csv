@@ -1,0 +1,4 @@
+No_Unit,g/g/day,g/g,g/g,g/mol,g/L,g/g,g/g,
+Nutrient,Vmax,K,s,MW,Starting_Conc_Water,Starting_Conc_Plant_1,Starting_Conc_Plant_2,Concentration_In
+C1,0.05,0.01,0.0012,NA,0.05,0.001,NA,0.01
+C2,0.05,0.01,0.0012,NA,0.05,0.001,NA,0.01

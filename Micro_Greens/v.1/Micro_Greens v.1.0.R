@@ -2,6 +2,9 @@
 rm(list=ls())
 
 library(deSolve)
+library(tidyr)
+library(dplyr)
+library(reshape2)
 
 ## Units are as follows ##
   
@@ -25,12 +28,38 @@ library(deSolve)
 
 setwd("F:/Model_Projects/Model_Projects_R/Micro_Greens/v.1")
 
-read.csv("Nutrient_Data.csv")
+# Read-in and Edit Data
+## # This code removes entire column if an NA is entered. For some datasets, enter 0s instead of NA
 
-parameters <- c(VM_C1 = 0.05, VM_C2 = 0.05, K1 = 0.01, K2 = 0.01, s1 = 0.0012,
-                s2 = 0.0012, VI = 1, VO = 2, mu_w = 2, CI1 = 0.01, CI2 = .01)
+Nutrient_Data<-read.csv("Nutrient_Data.csv")
+names(Nutrient_Data) <- Nutrient_Data[1,]
+Nutrient_Data <- Nutrient_Data[-1,]
+Nutrient_Data[,2:ncol(Nutrient_Data)] <- apply(Nutrient_Data[,2:ncol(Nutrient_Data)], 2, as.numeric)
 
-# Define initial state values
+
+Nutrient_Data <-Nutrient_Data[ , colSums(is.na(Nutrient_Data))==0]
+
+Water_Data<-read.csv("Water_Data.csv")
+names(Water_Data) <- Water_Data[1,]
+Water_Data <- Water_Data[-1,]
+
+Water_Data <-Water_Data[ , colSums(is.na(Water_Data))==0]
+
+Biomass_Data<-read.csv("Biomass_Data.csv")
+names(Biomass_Data) <- Biomass_Data[1,]
+Biomass_Data <- Biomass_Data[-1,]
+Biomass_Data[,2] <- as.numeric(Biomass_Data[,2])
+
+Biomass_Data <-Biomass_Data[ , colSums(is.na(Biomass_Data))==0]
+
+
+# We read in parameters manually for now, because the necessary code to automate it is a
+# little confusing and the data sets have different structures
+
+parameters <- c(VM_C1 = Nutrient_Data$Vmax[1], VM_C2 = Nutrient_Data$Vmax[2], K1 = , K2 = , s1 = , s2 = ,
+                VI = , VO = , mu_W = , CI1 = , CI2= )
+
+# Define initial state values, manually
 initial_state <- c(X = 0.01, XC1 = 0.001, XC2 = 0.001, V = 10, C1 = 0.05, C2 = 0.05)
 
 # Define the ODE system
