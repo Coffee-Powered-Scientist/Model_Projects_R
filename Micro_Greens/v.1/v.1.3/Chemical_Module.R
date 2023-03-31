@@ -28,28 +28,7 @@ for(i in 1:nrow(k_data)) {
 }
 
 # initialize lists to hold state variable names and initial concentrations
-state_vars <- list()
-init_concs <- list()
 
-# loop through each row of the species data
-for (i in 1:nrow(species_data)) {
-  
-  # extract the state variable name and initial concentration from the current row
-  state_var <- species_data[i, "Species_Code"]
-  init_conc <- species_data[i, "Initial_Conc"]
-  input_conc <- species_data[i, "Input_Conc"]
-  
-  # assign the initial concentration to the corresponding state variable in the model
-  assign(paste0(state_var, "_0"), init_conc)
-  
-  # assign the input concentration to a constant multiple parameter
-  assign(paste0("c", state_var), input_conc)
-  
-  # add the state variable name and initial concentration to the corresponding lists
-  state_vars[[i]] <- state_var
-  init_concs[[i]] <- init_conc
-  
-}
 
 # Define the function for the system of differential equations
 carbonate_eqs <- function(t, y, parms) {
@@ -60,17 +39,17 @@ carbonate_eqs <- function(t, y, parms) {
   HCO3 <- y[3]
   CO3 <- y[4]
   H <- y[5]
-  OH <- y[6]
+  OH<- y[6]
   
   # Unpack the rate constants
-  k1f <- parms[1]
-  k1b <- parms[2]
-  k11f <- parms[3]
-  k11b <- parms[4]
-  k12f <- parms[5]
-  k12b <- parms[6]
-  kwf <- parms[7]
-  kwb <- parms[8]
+  k1f <- parms$k1_0f
+  k1b <- parms$k1_0b
+  k11f <- parms$k1_1f
+  k11b <- parms$k1_1b
+  k12f <- parms$k1_2f
+  k12b <- parms$k1_2b
+  kwf <- parms$kwf
+  kwb <- parms$kwb
   
   # Calculate the reaction rates
   r1f <- k1f * CO2
@@ -96,7 +75,7 @@ carbonate_eqs <- function(t, y, parms) {
 
 # Set the initial state variables and rate constants
 y0 <- c(CO2 = 0.1, H2CO3 = 0.5, HCO3 = 0.0, CO3 = 0.00, H = 1e-6, OH = 1e-8)
-parms <- c(k1f = 1e-3, k1b = 1e-2, k11f = 1e-4, k11b = 1e-5, k12f = 1e-7, k12b = 1e-8, kwf = 1e-14, kwb = 1e-14)
+#parms <- c(k1f = 1e-3, k1b = 1e-2, k11f = 1e-4, k11b = 1e-5, k12f = 1e-7, k12b = 1e-8, kwf = 1e-14, kwb = 1e-14)
 
 # Set the time interval to simulate
 t <- seq(0, 100, by = 0.1)
