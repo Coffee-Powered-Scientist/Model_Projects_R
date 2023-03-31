@@ -1,5 +1,55 @@
 # Load the deSolve package
+
+setwd("F:/Model_Projects/Model_Projects_R/Micro_Greens/v.1/v.1.3")
+
 library(deSolve)
+
+k_data <- read.csv("Reaction_Parameters.csv")
+species_data <- read.csv("Chemical_Nom.csv")
+
+# Initialize an empty list to store the parameter values
+parms <- list()
+
+# Loop through the rows of the data frame
+for(i in 1:nrow(k_data)) {
+  
+  # Extract the reaction code, kf, and kb values
+  reaction_code <- k_data[i, "Reaction_Code"]
+  kf <- k_data[i, "kf"]
+  kb <- k_data[i, "kb"]
+  
+  # Assign the kf and kb values to dynamically created variables
+  assign(paste0("k", reaction_code, "f"), kf)
+  assign(paste0("k", reaction_code, "b"), kb)
+  
+  # Add the parameter values to the list
+  parms[[paste0("k", reaction_code, "f")]] <- kf
+  parms[[paste0("k", reaction_code, "b")]] <- kb
+}
+
+# initialize lists to hold state variable names and initial concentrations
+state_vars <- list()
+init_concs <- list()
+
+# loop through each row of the species data
+for (i in 1:nrow(species_data)) {
+  
+  # extract the state variable name and initial concentration from the current row
+  state_var <- species_data[i, "Species_Code"]
+  init_conc <- species_data[i, "Initial_Conc"]
+  input_conc <- species_data[i, "Input_Conc"]
+  
+  # assign the initial concentration to the corresponding state variable in the model
+  assign(paste0(state_var, "_0"), init_conc)
+  
+  # assign the input concentration to a constant multiple parameter
+  assign(paste0("c", state_var), input_conc)
+  
+  # add the state variable name and initial concentration to the corresponding lists
+  state_vars[[i]] <- state_var
+  init_concs[[i]] <- init_conc
+  
+}
 
 # Define the function for the system of differential equations
 carbonate_eqs <- function(t, y, parms) {
