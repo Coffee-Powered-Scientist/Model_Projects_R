@@ -1,3 +1,4 @@
+
 # Load the deSolve package
 
 setwd("F:/Model_Projects/Model_Projects_R/Micro_Greens/v.1/v.1.3")
@@ -39,7 +40,7 @@ carbonate_eqs <- function(t, y, parms) {
   HCO3 <- y[3]
   CO3 <- y[4]
   H <- y[5]
-  OH<- y[6]
+  OH <- y[6]
   
   # Unpack the rate constants
   k1f <- parms$k1_0f
@@ -50,31 +51,28 @@ carbonate_eqs <- function(t, y, parms) {
   k12b <- parms$k1_2b
   kwf <- parms$kwf
   kwb <- parms$kwb
+  kgf <- parms$kgf
+  kgb <- parms$kgb
+  
+  kH<-parms$kH<-.034 # At 25°C and 1 atm pressure, the value of kH for CO2 is approximately 3.4 x 10^-2 mol/L/atm.
+  PCO2<-parms$PCO2<-.0101 # PCO2 = (412 ppm) * (1/10^6) * (24.45 L/mol) = 0.0101 atm
   
   # Calculate the reaction rates
-  r1f <- k1f * CO2
-  r1b <- k1b * H2CO3
-  r11f <- k11f * H2CO3
-  r11b <- k11b * H * HCO3
-  r12f <- k12f * HCO3 - k12b * H * CO3
-  r12b <- k12b * H * CO3
-  rwf <- kwf
-  rwb <- kwb * H * OH
+  dCO2 <- kgf*(PCO2 - kH*CO2) - k1f*CO2 + k1b*H2CO3 - kgb*CO2
+  dH2CO3 <- k1f * CO2 - k1b * H2CO3 - k11f * H2CO3 + k11b * H * HCO3
+  dHCO3 <- k11f * H2CO3 - k11b * H * HCO3 - k12f * HCO3 + k12b * H * CO3
+  dCO3 <- k12f * HCO3 - k12b * H * CO3
+  dH <- kwf - kwb * H * OH - k11f*H2CO3 - k11b*H*HCO3 + k12f*HCO3 -k12b*CO3*H
+  dOH <- kwf - kwb * H * OH
   
-  # Calculate the derivatives
-  dCO2 <- -r1f + r1b
-  dH2CO3 <- r1f + r11b - r1b - r11f
-  dHCO3 <- r11f + r12b - r11b - r12f
-  dCO3 <- r12f - r12b
-  dH <- rwf - rwb - r11b + r11f
-  dOH <- rwf - rwb
+  
+  # Write out equations as described in the equations. In the future, it may be better to write them in terms of pool inputs and outputs, then just take the sum 
   
   # Return the derivatives as a list
   list(c(dCO2, dH2CO3, dHCO3, dCO3, dH, dOH))
 }
-
 # Set the initial state variables and rate constants
-y0 <- c(CO2 = 0.1, H2CO3 = 0.5, HCO3 = 0.0, CO3 = 0.00, H = 1e-6, OH = 1e-8)
+y0 <- c(CO2 = 0, H2CO3 = 0, HCO3 = 0.0, CO3 = 0.00, H = 1e-5, OH = 1e-9)
 #parms <- c(k1f = 1e-3, k1b = 1e-2, k11f = 1e-4, k11b = 1e-5, k12f = 1e-7, k12b = 1e-8, kwf = 1e-14, kwb = 1e-14)
 
 # Set the time interval to simulate
