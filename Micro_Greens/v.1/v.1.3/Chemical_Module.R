@@ -28,13 +28,27 @@ for(i in 1:nrow(k_data)) {
   parms[[paste0("k", reaction_code, "b")]] <- kb
 }
 
-# initialize lists to hold state variable names and initial concentrations
 
 
+# Read in Water data
+
+Water_Data<-read.csv("Water_Data.csv")
+names(Water_Data) <- Water_Data[1,]
+Water_Data <- Water_Data[-1,]
+
+Water_Data <-Water_Data[ , colSums(is.na(Water_Data))==0]
+
+Time_Conversion<-86400/24 # seconds to days to hours
 # Define the function for the system of differential equations
 carbonate_eqs <- function(t, y, parms) {
   
   # Unpack the state variables
+  
+  # Water
+  
+  V<-y[7]
+  
+  # Chemistry
   CO2 <- y[1]
   H2CO3 <- y[2]
   HCO3 <- y[3]
@@ -43,19 +57,26 @@ carbonate_eqs <- function(t, y, parms) {
   OH <- y[6]
   
   # Unpack the rate constants
-  k1f <- parms$k1_0f
-  k1b <- parms$k1_0b
-  k11f <- parms$k1_1f
-  k11b <- parms$k1_1b
-  k12f <- parms$k1_2f
-  k12b <- parms$k1_2b
-  kwf <- parms$kwf
-  kwb <- parms$kwb
-  kgf <- parms$kgf
-  kgb <- parms$kgb
+  k1f <- parms$k1_0f*Time_Conversion
+  k1b <- parms$k1_0b*Time_Conversion
+  k11f <- parms$k1_1f*Time_Conversion
+  k11b <- parms$k1_1b*Time_Conversion
+  k12f <- parms$k1_2f*Time_Conversion
+  k12b <- parms$k1_2b*Time_Conversion
+  kwf <- parms$kwf*Time_Conversion
+  kwb <- parms$kwb*Time_Conversion
+  kgf <- parms$kgf*Time_Conversion
+  kgb <- parms$kgb*Time_Conversion
   
   kH<-parms$kH<-.034 # At 25°C and 1 atm pressure, the value of kH for CO2 is approximately 3.4 x 10^-2 mol/L/atm.
   PCO2<-parms$PCO2<-.0101 # PCO2 = (412 ppm) * (1/10^6) * (24.45 L/mol) = 0.0101 atm
+  
+  # Water
+  
+  Break_Condition_1<-parms$BC1<-as.numeric(Water_Data$Break_Condition1)
+  VI<-parms$VI<-as.numeric(Water_Data$Inflow_Rate)
+  VO<-parms$VO<-as.numeric(Water_Data$Outflow_Rate)
+  
   
   # Calculate the reaction rates
   dCO2 <- kgf*(PCO2 - kH*CO2) - k1f*CO2 + k1b*H2CO3 - kgb*CO2
@@ -65,21 +86,28 @@ carbonate_eqs <- function(t, y, parms) {
   dH <- kwf - kwb * H * OH - k11f*H2CO3 - k11b*H*HCO3 + k12f*HCO3 -k12b*CO3*H
   dOH <- kwf - kwb * H * OH
   
+  # Water Equations
+  if (V > 5) {
+    dV <- VI - VO
+  } else {
+    dV <- ifelse(V <= 5 & VI - VO < 0, 0, VI - VO)
+  }
   
-  # Write out equations as described in the equations. In the future, it may be better to write them in terms of pool inputs and outputs, then just take the sum 
   
   # Return the derivatives as a list
-  list(c(dCO2, dH2CO3, dHCO3, dCO3, dH, dOH))
+  list(c(dCO2, dH2CO3, dHCO3, dCO3, dH, dOH, dV))
 }
 # Set the initial state variables and rate constants
-y0 <- c(CO2 = 0, H2CO3 = 0, HCO3 = 0.0, CO3 = 0.00, H = 1e-5, OH = 1e-9)
+y0 <- c(CO2 = 0, H2CO3 = 0, HCO3 = 0.0, CO3 = 0.00, H = 1e-7, OH = 1e-7, V=10)
 #parms <- c(k1f = 1e-3, k1b = 1e-2, k11f = 1e-4, k11b = 1e-5, k12f = 1e-7, k12b = 1e-8, kwf = 1e-14, kwb = 1e-14)
 
 # Set the time interval to simulate
-t <- seq(0, 100, by = 0.1)
+t <- seq(0, 5, by = 1/24)
 
 # Solve the system of differential equations using the ode solver in deSolve
-out <- ode(y = y0, times = t, func = carbonate_eqs, parms = parms)
+out <- ode(y = y0, times = t, func = carbonate_eqs, parms = parms, method = "lsoda")
 
 # Plot the results
-plot(out, xlab = "Time (s)", ylab = "Concentration (M)")
+plot(out, xlab = "Time (days)", ylab = "Concentration (M)")
+
+Model_Dataframe<-as.data.frame(out)
