@@ -51,7 +51,7 @@ Water_Data <- Water_Data[-1,]
 
 Water_Data <-Water_Data[ , colSums(is.na(Water_Data))==0]
 
-Time_Conversion<-1/24 # seconds to hours
+Time_Conversion<-1 # seconds to hours 
 # Define the function for the system of differential equations
 carbonate_eqs <- function(t, y, parms) {
   
@@ -108,7 +108,7 @@ carbonate_eqs <- function(t, y, parms) {
   kH<-parms$kH<-1.7e-5#.034 # At 25°C and 1 atm pressure, the value of kH for CO2 is approximately 3.4 x 10^-2 mol/L/atm.
   PCO2<-parms$PCO2<-.0101 # PCO2 = (412 ppm) * (1/10^6) * (24.45 L/mol) = 0.0101 atm
 
-  
+  kag<-1.22
   # Water
   
   Break_Condition_1<-parms$BC1<-as.numeric(Water_Data$Break_Condition1)
@@ -118,7 +118,7 @@ carbonate_eqs <- function(t, y, parms) {
   
   # Calculate the reaction rates
   ## Reaction 1: Bicarbonate
-  dCO2 <- VI*CO2_I/V+(kgf*(PCO2 - kH*CO2) - k1f*CO2 + k1b*H2CO3 - kgb*CO2)/V -VO*CO2/V
+  dCO2 <- VI*CO2_I/V  + (k1b*H2CO3 - kgb*CO2 - k1f*CO2 +kag*.0101)/V -VO*CO2/V
   dH2CO3 <- VI*H2CO3_I/V + (k1f * CO2 - k1b * H2CO3 - k11f * H2CO3 + k11b * H * HCO3)/V - VO*H2CO3/V
   dHCO3 <- VI*HCO3_I/V + (k11f * H2CO3 - k11b * H * HCO3 - k12f * HCO3 + k12b * H * CO3)/V - VO*HCO3/V
   dCO3 <- VI*CO3_I/V + (k12f * HCO3 - k12b * H * CO3)/V - VI*CO3/V
@@ -146,7 +146,7 @@ carbonate_eqs <- function(t, y, parms) {
   
   # complete hydronium/hydroxide equations
     
-  dH <- VI*H_I/V + (kwf - kwb * H * OH + H_Carb + H_Sulf)/V  - VO*H/V
+  dH <- VI*H_I/V + (kwf - kwb * H * OH + H_Carb + H_Sulf + H_Phos)/V  - VO*H/V
   dOH <- VI*OH_I/V + (kwf - kwb * H * OH)/V - VO*OH/V
   
   
@@ -162,17 +162,17 @@ carbonate_eqs <- function(t, y, parms) {
   list(c(dCO2, dH2CO3, dHCO3, dCO3, dH, dOH, dV, dH2SO4, dHSO4, dSO4, dH3PO4, dH2PO4, dHPO4, dPO4))
 }
 # Set the initial state variables and rate constants
-y0 <- c(CO2 = 0, H2CO3 = 0, HCO3 = 0.0, CO3 = 0.00, H = 1e-7, OH = 1e-7, V=10, H2SO4 = 0, HSO4 = 0, SO4 = 0, H3PO4 = 0, H2PO4 = 0, HPO4 = 0, PO4 = 0)
+y0 <- c(CO2 = 0.0001, H2CO3 = 0, HCO3 = 0.0, CO3 = 0.00, H = 1e-7, OH = 1e-7, V=10, H2SO4 = 0, HSO4 = 0, SO4 = 0, H3PO4 = 0, H2PO4 = 0, HPO4 = 0, PO4 = 0)
 #parms <- c(k1f = 1e-3, k1b = 1e-2, k11f = 1e-4, k11b = 1e-5, k12f = 1e-7, k12b = 1e-8, kwf = 1e-14, kwb = 1e-14)
 
 # Set the time interval to simulate
-t <- seq(0, 240, by = 1)
+t <- seq(0, 3600, by = .1)
 
 # Solve the system of differential equations using the ode solver in deSolve
 out <- ode(y = y0, times = t, func = carbonate_eqs, parms = parms, method = "rk4")
 
 # Plot the results
-plot(out, xlab = "Time (hours)", ylab = "Concentration (M)")
+plot(out, xlab = "Time (seconds)", ylab = "Concentration (M)")
 
 Model_Dataframe<-as.data.frame(out)
 
