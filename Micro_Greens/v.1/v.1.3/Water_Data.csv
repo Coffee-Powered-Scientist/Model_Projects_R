@@ -1,3 +1,3 @@
 L/sec,L/sec,No_Units
 Inflow_Rate,Outflow_Rate,Break_Condition1
-0.1,0.1,5
+0.01,0.01,5
