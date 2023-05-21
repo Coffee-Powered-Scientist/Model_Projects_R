@@ -54,7 +54,7 @@ Water_Data <- Water_Data[-1,]
 
 Water_Data <-Water_Data[ , colSums(is.na(Water_Data))==0]
 
-Time_Conversion<-1 # seconds to hours 
+Time_Conversion<-60 # seconds to hours 
 # Define the function for the system of differential equations
 carbonate_eqs <- function(t, y, parms) {
   
@@ -148,12 +148,23 @@ carbonate_eqs <- function(t, y, parms) {
   PCO2<-parms$PCO2<-.0101 # PCO2 = (412 ppm) * (1/10^6) * (24.45 L/mol) = 0.0101 atm
 
   kag<-1.22*Time_Conversion
+  
+ 
+  
   # Water
   
   Break_Condition_1<-parms$BC1<-as.numeric(Water_Data$Break_Condition1)
   VI<-parms$VI<-as.numeric(Water_Data$Inflow_Rate)
   VO<-parms$VO<-as.numeric(Water_Data$Outflow_Rate)
   
+  
+# Plant Equations
+  dX<-mu*X
+  
+  mu<-min(VmaxN*(NO3+NH3+NH4+HNO3)/kN*(NO3+NH3+NH4+HNO3),VmaxP*(PO4+HPO4+H2PO4+H3PO4)/kP**(PO4+HPO4+H2PO4+H3PO4))
+  Ntot<- (NO3+NH3+NH4+HNO3)*V
+  PU_NH3<- SN*(NH3/Ntot)*dX
+  PU_NH4<- SN*(NH4/Ntot)*dX
   
   # Calculate the reaction rates
   ## Reaction 1: Bicarbonate
@@ -229,6 +240,7 @@ carbonate_eqs <- function(t, y, parms) {
   }
   
   
+  
   # Return the derivatives as a list
   list(c(dCO2, dH2CO3, dHCO3, dCO3, dH, dOH, dV, dH2SO4, dHSO4, dSO4, dH3PO4, dH2PO4, dHPO4, dPO4, dNH3, dNH4, dHNO3, dNO3,
          dCa, dCaOH, dCaOH2, dK, dKOH, dMg, dMgOH, dMgOH2))
@@ -240,7 +252,7 @@ y0 <- c(CO2 = 0.0001, H2CO3 = 0, HCO3 = 0.0, CO3 = 0.00, H = 1e-7, OH = 1e-7, V=
 #parms <- c(k1f = 1e-3, k1b = 1e-2, k11f = 1e-4, k11b = 1e-5, k12f = 1e-7, k12b = 1e-8, kwf = 1e-14, kwb = 1e-14)
 
 # Set the time interval to simulate
-t <- seq(0, 3600, by = .1)
+t <- seq(0, 60, by = .01)
 
 # Solve the system of differential equations using the ode solver in deSolve
 out <- ode(y = y0, times = t, func = carbonate_eqs, parms = parms, method = "rk4")
